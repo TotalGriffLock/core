@@ -33,7 +33,7 @@ OUTPUT=
 DO_CHECK=
 DO_ORIGIN=
 
-while getopts AaCceHilNnOstVvwx OPT; do
+while getopts AaCceHilNnOostVvwx OPT; do
 	case ${OPT} in
 	A)
 		OUTPUT="${OUTPUT} \${product_arch}"
@@ -68,6 +68,9 @@ while getopts AaCceHilNnOstVvwx OPT; do
 	O)
 		DO_ORIGIN="-O"
 		;;
+        o)
+                OUTPUT="\${product_os}\|\${product_kernel}\|\${product_arch}\|\${product_name}\|\${product_version}\|\${product_virt}\|"
+                ;;
 	s)
 		OUTPUT="${OUTPUT} \${product_size}"
 		;;
@@ -217,6 +220,46 @@ core)
 	fi
 	;;
 esac
+        if [ -z "${OUTPUT%%*product_os*}" ]; then
+                product_os=$(uname -s)
+        fi
+        if [ -z "${OUTPUT%%*product_kernel*}" ]; then
+                product_kernel=$(uname -i)
+        fi
+        if [ -z "${OUTPUT%%*product_virt*}" ]; then
+                hv_vendor=$(sysctl -n hw.hv_vendor)
+                if [ -n "${hv_vendor}" ]; then
+                        case "${hv_vendor}" in
+                        "bhyve bhyve")
+                                product_virt="bhyve"
+                                ;;
+                        "KVMKVMKVM")
+                                product_virt="kvm"
+                                ;;
+                        "TCGTCGTCGTCG")
+                                product_virt="qemu"
+                                ;;
+                        "Microsoft Hv")
+                                product_virt="microsoft"
+                                ;;
+                        "lrpepvh vr")
+                                product_virt="parallels"
+                                ;;
+                        "VMwareVMware")
+                                product_virt="vmware"
+                                ;;
+                        "XenVMMXenVMM")
+                                product_virt="xen"
+                                ;;
+                        "ACRNACRNACRN")
+                                product_virt="acrn"
+                                ;;
+                        "QNXQVMBSQG")
+                                product_virt="qnx"
+                                ;;
+                        esac
+                fi
+        fi
 
 OUTPUT=$(eval echo ${OUTPUT})
 if [ -n "${OUTPUT}" ]; then
